@@ -1,12 +1,16 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 
+
 const TecnologiasCard = () => {
   return (
     <View style={styles.card}>
       <Text style={styles.titulo}>Tecnologias Usadas</Text>
       <Text style={styles.texto}>
-        
+        React-Native; <br/>
+        Expo;<br/>
+        Back4App; <br/>
+        API PokémonTCG
       </Text>
       <Image source={require('../assets/logan-paul-wears-most-expensive-pokemon-card-to-wrestlemania_3xwc.jpg')} style={{ width : 250, height: 250}} />
 
