@@ -1,113 +1,92 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet, Button, Pressable } from 'react-native';
-// Adicionar o hook useRouter para navegação programática
-import { Link, useRouter } from 'expo-router'; 
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, Image, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
+import Parse from 'parse/react-native.js';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+Parse.setAsyncStorage(require('@react-native-async-storage/async-storage').default);
+Parse.initialize("oROi44bIA05p8RhgGbzBr6ivK5BFxLr6MwKMWH2t", "gOJwJ5OsL2p9pc9HiePVVakMQB8kUm0pId7FVzal");
+Parse.serverURL = 'https://parseapi.back4app.com/';
 
-export default function HomeScreen() {
-  const router = useRouter(); // Inicializa o hook de roteamento
+export default function MegaCardsPage() {
+  const [cartas, setCartas] = useState([]);
+  const [erro, setErro] = useState(null);
+  const [carregando, setCarregando] = useState(true);
 
-  const handleNavigateToDetail = () => {
-    // router.push() empilha a nova tela, permitindo que o usuário volte.
-    // O nome da rota é baseado no caminho do arquivo (ex: app/(tabs)/detail.tsx -> '/detail')
-    router.push('/sobre'); 
-  };
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function carregarCartas() {
+      try {
+        const url = 'https://api.pokemontcg.io/v2/cards?q=subtypes:mega&orderBy=-set.releaseDate';
+        const response = await fetch(url, { signal: controller.signal });
+        if (!response.ok) throw new Error(`Status: ${response.status}`);
+        const result = await response.json();
+        setCartas(Array.isArray(result?.data) ? result.data : []);
+      } catch (err) {
+        setErro(err.message);
+      } finally {
+        setCarregando(false);
+      }
+    }
+
+    carregarCartas();
+    return () => controller.abort();
+  }, []);
+
+  const renderItem = ({ item }) => (
+    <View style={styles.card}>
+      <Image source={{ uri: item.images?.small }} style={styles.image} />
+      <Text style={styles.title}>{item.name}</Text>
+      <Text style={styles.subtitle}>{item.set?.name || "Conjunto desconhecido"}</Text>
+      <Text style={styles.price}>
+        {item.tcgplayer?.prices?.holofoil?.low
+          ? `R$ ${item.tcgplayer.prices.holofoil.low}`
+          : 'Preço indisponível'}
+      </Text>
+    </View>
+  );
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <ScrollView style={styles.container}>
+      <Text style={styles.header}>CARTAS MEGA</Text>
+      <Text style={styles.subheader}>Mais recentes primeiro</Text>
+      <Text style={styles.highlight}>Veja as cartas mais raras e poderosas do universo Pokémon!</Text>
+
+      {carregando ? (
+        <ActivityIndicator size="large" color="#4F46E5" style={{ marginTop: 20 }} />
+      ) : erro ? (
+        <Text style={styles.error}>{erro}</Text>
+      ) : (
+        <FlatList
+          data={cartas}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
+      )}
 
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-
-      <ThemedView style={styles.stepContainer}>
-        {/*
-          Exemplo de navegação declarativa usando o componente Link (já existia no seu código)
-          Isto abriria um modal, mas você pode mudar o href para navegar para qualquer rota.
-        */}
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          {/* ... Link.Menu ... */}
-        </Link>
-
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-
-      {/* --- CÓDIGO DE REDIRECIONAMENTO (NAVEGAÇÃO) ADICIONADO --- */}
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 4: Redirecionar para outra Página</ThemedText>
-        <ThemedText>
-            Clique no botão abaixo para ir para a página de detalhes usando navegação programática.
-        </ThemedText>
-        
-        <Button
-            title="Ir para Detalhes (/detail)"
-            onPress={handleNavigateToDetail}
-        />
-      </ThemedView>
-      {/* --------------------------------------------------------- */}
-
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <View style={styles.tipsContainer}>
+        <Text style={styles.tipsTitle}>Dicas para colecionadores</Text>
+        <Text style={styles.tip}>• Procure cartas com selo especial.</Text>
+        <Text style={styles.tip}>• Invista na sua coleção.</Text>
+        <Text style={styles.tip}>• Seja um colecionador!!</Text>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+  container: { padding: 16, backgroundColor: '#fff' },
+  header: { fontSize: 28, fontWeight: 'bold', color: '#4F46E5', marginBottom: 4 },
+  subheader: { fontSize: 18, color: '#6B7280', marginBottom: 10 },
+  highlight: { fontSize: 16, marginBottom: 20, color: '#1F2937' },
+  list: { paddingBottom: 20 },
+  card: { backgroundColor: '#F3F4F6', padding: 12, borderRadius: 10, marginBottom: 16 },
+  image: { height: 150, borderRadius: 8, resizeMode: 'contain', marginBottom: 10 },
+  title: { fontSize: 18, fontWeight: 'bold', color: '#1F2937' },
+  subtitle: { fontSize: 14, color: '#6B7280', marginVertical: 4 },
+  price: { fontSize: 16, fontWeight: 'bold', color: '#059669' },
+  error: { color: 'red', fontSize: 16, marginTop: 20 },
+  tipsContainer: { marginTop: 30, padding: 16, backgroundColor: '#EEF2FF', borderRadius: 8 },
+  tipsTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 8, color: '#4F46E5' },
+  tip: { fontSize: 14, color: '#1F2937', marginBottom: 4 },
 });
