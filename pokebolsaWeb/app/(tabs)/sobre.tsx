@@ -9,6 +9,7 @@ import { Link } from 'expo-router';
 import { ScrollView } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 import SobreNosCard from "../components/SobreNosCard";
+import TecnologiasCard from '../components/TecnologiasCards';
 
 
 
@@ -17,6 +18,7 @@ export default function SobreScreen() {
     <SafeAreaView style={{ flex: 1 }}>
       <ScrollView>
         <SobreNosCard />
+        <TecnologiasCard />
       </ScrollView>
     </SafeAreaView>
   );
