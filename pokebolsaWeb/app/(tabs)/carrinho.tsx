@@ -9,16 +9,17 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  RefreshControl // Adicionei para poder puxar pra baixo e atualizar
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 
-// IMPORTANTE: Importamos nossas funções REST aqui
+// Importamos nossas funções REST
 import { apiGet, apiPost, apiPut } from '../../services/api';
 
 // =================================================================
-// 1. TIPOS E MOCK DE DADOS
+// 1. TIPOS
 // =================================================================
 
 interface Product {
@@ -26,6 +27,7 @@ interface Product {
   name: string;
   price: number;
   description: string;
+  // image?: string; // Futuramente você pode adicionar imagem
 }
 
 interface CartItem extends Product {
@@ -34,13 +36,7 @@ interface CartItem extends Product {
 
 type Screen = 'PRODUCTS' | 'CART';
 
-// Mock de produtos (Idealmente você buscaria isso com apiGet('Product') futuramente)
-const PRODUCTS_MOCK: Product[] = [
-  { id: 'p1', name: 'Notebook Ultrafast X', price: 5899.99, description: 'Laptop de alta performance para jogos e trabalho.' },
-  { id: 'p2', name: 'Mouse Gamer Chroma', price: 199.50, description: 'Mouse ergonômico com 10 botões programáveis.' },
-  { id: 'p3', name: 'Teclado Mecânico Pro', price: 450.00, description: 'Switch brown, layout ABNT2, RGB.' },
-  { id: 'p4', name: 'Monitor 4K OLED', price: 3200.00, description: '27 polegadas, 144Hz, cores vibrantes.' },
-];
+// REMOVIDO: O PRODUCTS_MOCK não é mais necessário, pois virá do banco.
 
 // =================================================================
 // 2. COMPONENTES AUXILIARES
@@ -49,7 +45,10 @@ const PRODUCTS_MOCK: Product[] = [
 const ProductCard: React.FC<{ product: Product, onAddToCart: (product: Product) => void }> = React.memo(({ product, onAddToCart }) => (
   <View style={styles.productCard}>
     <Text style={styles.productName}>{product.name}</Text>
-    <Text style={styles.productPrice}>R$ {product.price.toFixed(2).replace('.', ',')}</Text>
+    {/* Tratamento para garantir que price seja número antes de toFixed */}
+    <Text style={styles.productPrice}>
+      R$ {Number(product.price || 0).toFixed(2).replace('.', ',')}
+    </Text>
     <Text style={styles.productDescription}>{product.description}</Text>
     <TouchableOpacity style={styles.addButton} onPress={() => onAddToCart(product)}>
       <Text style={styles.addButtonText}>Adicionar ao Carrinho</Text>
@@ -94,11 +93,15 @@ const CartItemCard: React.FC<{
 
 export default function Carrinho() {
   const router = useRouter();
+  
+  // NOVO: Estado para os produtos do banco de dados
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+
   const [cart, setCart] = useState<CartItem[]>([]);
   const [currentScreen, setCurrentScreen] = useState<Screen>('PRODUCTS');
-  const [loading, setLoading] = useState(true);
+  const [loadingSession, setLoadingSession] = useState(true);
   
-  // Estado para controlar a sessão e o ID do objeto no Back4App
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [cartObjectId, setCartObjectId] = useState<string | null>(null);
 
@@ -109,18 +112,15 @@ export default function Carrinho() {
   // --- Função REST para Salvar Carrinho ---
   const saveCartToAPI = useCallback(async (currentCart: CartItem[], currentSessionId: string, objectId: string | null) => {
     try {
-      // Preparamos os dados. Convertemos o array para string JSON pois o Back4App armazena arrays complexos melhor assim ou via Relations
       const payload = {
         sessionId: currentSessionId,
         items: JSON.stringify(currentCart) 
       };
 
       if (objectId) {
-        // Se já temos um ID, ATUALIZAMOS (PUT)
         await apiPut('CartSession', objectId, payload);
         console.log('Carrinho ATUALIZADO via REST.');
       } else {
-        // Se não temos ID, CRIAMOS (POST) e salvamos o novo ID
         const response = await apiPost('CartSession', payload);
         if (response.objectId) {
           setCartObjectId(response.objectId);
@@ -132,11 +132,39 @@ export default function Carrinho() {
     }
   }, []);
 
+  // --- NOVA FUNÇÃO: Buscar Produtos do Back4App ---
+  const fetchProducts = async () => {
+    setLoadingProducts(true);
+    try {
+      // ATENÇÃO: Certifique-se que o nome da classe no Back4App é exatamente 'Product'
+      const response = await apiGet('Product'); 
+      
+      if (response.results) {
+        // Mapeamos os dados do Back4App (objectId) para nosso formato (id)
+        const mappedProducts = response.results.map((p: any) => ({
+          id: p.objectId,
+          name: p.name,
+          price: p.price || 0,
+          description: p.description || '',
+        }));
+        setProducts(mappedProducts);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar produtos:", error);
+      Alert.alert("Erro", "Não foi possível carregar os produtos.");
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
   // --- Inicialização ---
   useEffect(() => {
-    const initializeSession = async () => {
-      let localSessionId = await AsyncStorage.getItem('userSessionId');
+    const initialize = async () => {
+      // 1. Busca Produtos
+      fetchProducts();
 
+      // 2. Busca Sessão do Carrinho
+      let localSessionId = await AsyncStorage.getItem('userSessionId');
       if (!localSessionId) {
         localSessionId = `sess_${Date.now()}_${Math.random().toString(36).substring(2)}`;
         await AsyncStorage.setItem('userSessionId', localSessionId);
@@ -144,16 +172,12 @@ export default function Carrinho() {
       setSessionId(localSessionId);
 
       try {
-        // Busca carrinho existente no Back4App usando REST
-        // Query param: ?where={"sessionId":"valor"}
         const whereQuery = JSON.stringify({ sessionId: localSessionId });
-        // Codificamos a URL para evitar erros com caracteres especiais
         const result = await apiGet(`CartSession?where=${encodeURIComponent(whereQuery)}`);
 
         if (result.results && result.results.length > 0) {
           const serverCart = result.results[0];
-          setCartObjectId(serverCart.objectId); // Salvamos o ID para updates futuros
-          
+          setCartObjectId(serverCart.objectId);
           if (serverCart.items) {
             setCart(JSON.parse(serverCart.items) as CartItem[]);
           }
@@ -161,28 +185,25 @@ export default function Carrinho() {
       } catch (error) {
         console.error('Erro ao buscar carrinho inicial:', error);
       } finally {
-        setLoading(false);
+        setLoadingSession(false);
       }
     };
 
-    initializeSession();
+    initialize();
   }, []);
 
   // --- Auto-Save ---
   useEffect(() => {
-    // Debounce simples: só salva se não estiver carregando e se tiver sessão
-    if (sessionId && !loading) {
+    if (sessionId && !loadingSession) {
       const timer = setTimeout(() => {
         saveCartToAPI(cart, sessionId, cartObjectId);
-      }, 1000); // Espera 1 segundo após a última mudança para salvar (evita muitas requisições)
-
+      }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [cart, sessionId, cartObjectId, loading, saveCartToAPI]);
+  }, [cart, sessionId, cartObjectId, loadingSession, saveCartToAPI]);
 
 
   // --- Manipulação do Carrinho ---
-
   const addItemToCart = useCallback((product: Product) => {
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.id === product.id);
@@ -217,8 +238,16 @@ export default function Carrinho() {
 
   const renderProductList = () => (
     <FlatList
-      data={PRODUCTS_MOCK}
+      data={products} // AGORA USAMOS OS DADOS DO BANCO
       keyExtractor={(item) => item.id}
+      refreshControl={
+        <RefreshControl refreshing={loadingProducts} onRefresh={fetchProducts} />
+      }
+      ListEmptyComponent={
+        !loadingProducts ? (
+          <Text style={styles.emptyCartText}>Nenhum produto encontrado no Back4App.</Text>
+        ) : null
+      }
       renderItem={({ item }) => (
         <ProductCard product={item} onAddToCart={addItemToCart} />
       )}
@@ -258,7 +287,7 @@ export default function Carrinho() {
             </View>
             <TouchableOpacity 
               style={styles.checkoutButton}
-              onPress={() => Alert.alert("Sucesso", "Pedido finalizado! (Integração REST pronta)")}
+              onPress={() => Alert.alert("Sucesso", "Pedido enviado!")}
             >
               <Text style={styles.checkoutButtonText}>Finalizar Compra</Text>
             </TouchableOpacity>
@@ -269,11 +298,11 @@ export default function Carrinho() {
     </View>
   );
 
-  if (loading) {
+  if (loadingSession) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#4F46E5" />
-        <Text style={styles.loadingText}>Sincronizando...</Text>
+        <Text style={styles.loadingText}>Carregando Loja...</Text>
       </View>
     );
   }
@@ -292,22 +321,7 @@ export default function Carrinho() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.tabBar}>
-        <TouchableOpacity
-          style={[styles.tabButton, currentScreen === 'PRODUCTS' && styles.tabActive]}
-          onPress={() => setCurrentScreen('PRODUCTS')}
-        >
-          <Text style={[styles.tabText, currentScreen === 'PRODUCTS' && styles.tabTextActive]}>Produtos</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tabButton, currentScreen === 'CART' && styles.tabActive]}
-          onPress={() => setCurrentScreen('CART')}
-        >
-          <Text style={[styles.tabText, currentScreen === 'CART' && styles.tabTextActive]}>
-            Carrinho ({cart.reduce((sum, item) => sum + item.quantity, 0)})
-          </Text>
-        </TouchableOpacity>
-      </View>
+      
 
       <View style={styles.content}>
         {currentScreen === 'PRODUCTS' ? renderProductList() : renderCart()}
