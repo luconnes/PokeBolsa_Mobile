@@ -3,8 +3,8 @@
 // Mudei a BASE_URL para a raiz (sem /classes)
 const BASE_URL = "https://parseapi.back4app.com";
 
-const APP_ID = "Glkhp9KySPIUGhGv0gcrOn16Gq23IsM0D1WPSlhG";
-const REST_KEY = "VTlaXKQ66J1IzYgJQnRO6oh6qSJfNPaRjcNhhawd9";
+const APP_ID = "GIkhp9KySPIUGhGv0gcrOn16Gq231sM0D1WPSlhG";
+const REST_KEY = "VTIaXKQ66J1zYgJQnRO6oh6qSJfNPaRjcNhhawd9";
 
 const headers = {
   "X-Parse-Application-Id": APP_ID,
