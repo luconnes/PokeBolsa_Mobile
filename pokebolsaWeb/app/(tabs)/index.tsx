@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, Image, StyleSheet, ActivityIndicator } from 'react-native';
 
-// REMOVIDO: Toda a importação e configuração do Parse que causava o erro.
-
 export default function MegaCardsPage() {
   const [cartas, setCartas] = useState([]);
   const [erro, setErro] = useState(null);
@@ -13,14 +11,21 @@ export default function MegaCardsPage() {
 
     async function carregarCartas() {
       try {
-        // Mantemos o fetch nativo pois é uma API externa (Pokemon TCG)
-        const url = 'https://api.pokemontcg.io/v2/cards?q=subtypes:mega&orderBy=-set.releaseDate';
-        const response = await fetch(url, { signal: controller.signal });
-        
+        const url =
+          'https://api.pokemontcg.io/v2/cards?q=subtypes:mega&orderBy=-set.releaseDate';
+
+        const response = await fetch(url, {
+          signal: controller.signal,
+          headers: {
+            'X-Api-Key': '3fd1181c-f0be-4855-a6ff-3120ed6bc7f3'  // 🔥 OBRIGATÓRIO
+          }
+        });
+
         if (!response.ok) throw new Error(`Status: ${response.status}`);
-        
+
         const result = await response.json();
         setCartas(Array.isArray(result?.data) ? result.data : []);
+
       } catch (err: any) {
         if (err.name !== 'AbortError') {
           setErro(err.message);
@@ -47,7 +52,6 @@ export default function MegaCardsPage() {
     </View>
   );
 
-  // Componente para o topo da lista (Substitui a parte de cima do ScrollView)
   const renderHeader = () => (
     <View>
       <Text style={styles.header}>CARTAS MEGA</Text>
@@ -58,7 +62,6 @@ export default function MegaCardsPage() {
     </View>
   );
 
-  // Componente para o rodapé da lista (Substitui a parte de baixo do ScrollView)
   const renderFooter = () => (
     <View style={styles.tipsContainer}>
       <Text style={styles.tipsTitle}>Dicas para colecionadores</Text>
@@ -75,7 +78,6 @@ export default function MegaCardsPage() {
         renderItem={renderItem}
         keyExtractor={(item: any) => item.id}
         contentContainerStyle={styles.list}
-        // Usamos ListHeader e ListFooter para evitar ScrollView dentro de ScrollView
         ListHeaderComponent={renderHeader}
         ListFooterComponent={!carregando ? renderFooter : null}
       />
@@ -84,7 +86,7 @@ export default function MegaCardsPage() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' }, // Mudei para flex: 1
+  container: { flex: 1, backgroundColor: '#fff' },
   header: { fontSize: 28, fontWeight: 'bold', color: '#4F46E5', marginBottom: 4, marginTop: 16, marginHorizontal: 16 },
   subheader: { fontSize: 18, color: '#6B7280', marginBottom: 10, marginHorizontal: 16 },
   highlight: { fontSize: 16, marginBottom: 20, color: '#1F2937', marginHorizontal: 16 },

@@ -5,12 +5,17 @@ const SobreNosCard = () => {
   return (
     <View style={styles.card}>
       <Text style={styles.titulo}>Porque POKEBOLSA ?</Text>
-      <Text style={styles.texto}>
-        Decidimos replicar o funcionamento de uma bolsa de valores utilizando o funcionamento do mercado de cartas de Pokémon Trading Card Game.
-      </Text>
-      <Image source={require('../assets/logan-paul-wears-most-expensive-pokemon-card-to-wrestlemania_3xwc.jpg')} style={{ width : 250, height: 250}} />
 
-      
+      <Text style={styles.texto}>
+        Decidimos replicar o funcionamento de uma bolsa de valores utilizando o
+        funcionamento do mercado de cartas de Pokémon Trading Card Game.
+      </Text>
+
+      <Image
+        source={require('../assets/logan-paul-wears-most-expensive-pokemon-card-to-wrestlemania_3xwc.jpg')}
+        style={styles.imagem}
+        resizeMode="cover"
+      />
     </View>
   );
 };
@@ -18,26 +23,42 @@ const SobreNosCard = () => {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#ffffff',
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 20,
     margin: 16,
-    elevation: 5, // Sombra no Android
-    shadowColor: '#000', // Sombra no iOS
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+
+    borderWidth: 1,
+    borderColor: '#f1f1f1',
+
+    transform: [{ translateY: 0 }],
   },
+
   titulo: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '900',
     textTransform: 'uppercase',
-    marginBottom: 10,
-    color: '#333',
+    marginBottom: 12,
+    color: '#222',
+    letterSpacing: 1,
   },
+
   texto: {
     fontSize: 16,
-    lineHeight: 22,
+    lineHeight: 24,
     color: '#555',
+    marginBottom: 20,
+  },
+
+  imagem: {
+    width: '100%',
+    aspectRatio: 1, // mantém proporção quadrada
+    borderRadius: 16,
+    overflow: 'hidden',
   },
 });
 

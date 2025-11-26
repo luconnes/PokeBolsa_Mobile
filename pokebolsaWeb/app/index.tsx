@@ -9,21 +9,21 @@ export default function Index() {
   useEffect(() => {
     const checkLogin = async () => {
       try {
-        
+        // Verifica se existe um token salvo
         const token = await AsyncStorage.getItem('userToken');
         
-        
+        // Pequeno delay para garantir que a navegação esteja pronta
         setTimeout(() => {
           if (token) {
             
             router.replace('/(tabs)');
           } else {
-            
+            // Se não tem, vai para o login
             router.replace('/login');
           }
         }, 100);
       } catch (e) {
-        
+        // Em caso de erro, manda pro login por segurança
         router.replace('/login');
       }
     };
