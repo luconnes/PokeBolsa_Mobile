@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 
 import { useRouter } from 'expo-router';
-import Parse from 'parse/react-native.js';
+// CORREÇÃO AQUI: Importamos 'apiPost' diretamente (entre chaves)
+import { apiPost } from '../services/api'; 
 
 export default function Cadastro() {
   const router = useRouter();
@@ -27,19 +28,21 @@ export default function Cadastro() {
 
     setLoading(true);
     try {
-      const user = new Parse.User();
-      user.set("username", email); 
-      user.set("password", password);
-      user.set("email", email);
-      user.set("name", name); 
-      
-      await user.signUp();
+      const body = {
+        username: email, 
+        email: email,
+        password: password,
+        name: name
+      };
+
+      // CORREÇÃO AQUI: Chamamos a função apiPost diretamente
+      await apiPost('users', body);
       
       Alert.alert('Sucesso', 'Conta criada com sucesso!');
-      // Ajuste '/login' para o nome exato do arquivo da sua tela de login
-      //router.replace('/login'); 
+      router.back(); 
+      
     } catch (error: any) {
-      Alert.alert('Erro no Cadastro', error.message);
+      Alert.alert('Erro no Cadastro', error.message || 'Falha ao criar conta.');
     } finally {
       setLoading(false);
     }

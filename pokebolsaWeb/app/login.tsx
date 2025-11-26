@@ -8,12 +8,13 @@ import {
   Alert, 
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform,
-  Image
+  Platform
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import Parse from 'parse/react-native.js';
 import { Feather } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { apiLogin } from '../services/api';
 
 export default function Login() {
   const router = useRouter();
@@ -32,14 +33,35 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      await Parse.User.logIn(username, password);
-      
-      router.replace('/(tabs)'); 
-    } catch (error: any) {
-      let errorMessage = error.message;
-      if (error.code === 101) {
-        errorMessage = 'Usuário ou senha inválidos.';
+      const response = await apiLogin(username, password);
+
+      if (response.error) {
+        throw new Error(response.error);
       }
+
+      // 3. Salva os dados críticos no armazenamento local (AsyncStorage)
+      // O 'sessionToken' é a chave para fazer requisições futuras autenticadas
+      if (response.sessionToken) {
+        await AsyncStorage.setItem('userToken', response.sessionToken);
+        await AsyncStorage.setItem('userId', response.objectId);
+        // Opcional: Salvar o nome/email para exibir no perfil
+        await AsyncStorage.setItem('userData', JSON.stringify(response));
+        
+        // 4. Redireciona para o app
+        router.replace('/(tabs)'); 
+      } else {
+        throw new Error('Erro inesperado: Token não recebido.');
+      }
+
+    } catch (error: any) {
+      console.log(error);
+      let errorMessage = error.message || 'Ocorreu um erro no login.';
+      
+      // Tradução simples de erro comum
+      if (errorMessage.includes('Invalid username/password')) {
+        errorMessage = 'Usuário ou senha incorretos.';
+      }
+      
       Alert.alert('Erro no Login', errorMessage);
     } finally {
       setIsLoading(false);
@@ -57,7 +79,6 @@ export default function Login() {
     >
       <View style={styles.content}>
         
-        {/* Cabeçalho / Logo */}
         <View style={styles.header}>
           <View style={styles.logoPlaceholder}>
             <Feather name="shopping-bag" size={40} color="#06032eff" />
@@ -66,7 +87,6 @@ export default function Login() {
           <Text style={styles.subtitle}>Faça login para continuar</Text>
         </View>
 
-        {/* Formulário */}
         <View style={styles.form}>
           <View style={styles.inputContainer}>
             <Feather name="user" size={20} color="#27292bff" style={styles.inputIcon} />
@@ -114,7 +134,6 @@ export default function Login() {
           </TouchableOpacity>
         </View>
 
-        {/* Rodapé */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>Não tem uma conta? </Text>
           <TouchableOpacity onPress={navigateToSignUp}>
@@ -182,7 +201,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1F2937',
   },
-  
   loginButton: {
     backgroundColor: '#e03427ff',
     height: 56,
