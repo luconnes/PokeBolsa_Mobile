@@ -214,58 +214,47 @@ useEffect(() => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff', paddingTop: 30 },
   header: { fontSize: 28, fontWeight: 'bold', color: '#4F46E5', marginBottom: 4, marginTop: 16, marginHorizontal: 16 },
-  subheader: { fontSize: 18, color: '#6B7280', marginBottom: 10, marginHorizontal: 16 },
-  highlight: { fontSize: 16, marginBottom: 20, color: '#1F2937', marginHorizontal: 16 },
-  
-  // 1. Estilo para o container da FlatList.
-  // Usado em 'contentContainerStyle' para garantir o padding horizontal geral.
-  listContent: { 
-    paddingHorizontal: 8, 
-    paddingBottom: 20,
-    // É crucial que a FlatList no seu JSX tenha a prop numColumns={2}
-},
-  
-  // 2. Estilo do Cartão AJUSTADO para layout de 2 colunas
-  card: { 
-    // Define a largura para que dois cards caibam, deixando espaço para as margens
-    width: '47%', 
-    backgroundColor: '#F3F4F6', 
-    padding: 12, 
-    borderRadius: 10, 
-    marginBottom: 16, 
-    // Adiciona margem horizontal para criar um espaçamento entre os cards
-    marginHorizontal: '1.5%', 
-    
-    // Sombra (Mantido)
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  image: { height: 120, borderRadius: 8, resizeMode: 'contain', marginBottom: 10, backgroundColor: '#fff' },
-  infoContainer: { marginBottom: 10 },
-  title: { fontSize: 16, fontWeight: 'bold', color: '#1F2937' }, // Ajustado para caber melhor
-  subtitle: { fontSize: 12, color: '#6B7280', marginVertical: 4 },
-  price: { fontSize: 16, fontWeight: 'bold', color: '#059669', marginTop: 4 },
-  
-  // Estilo do Botão (Ajustado)
-  addButton: {
-    backgroundColor: '#4F46E5',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  addButtonText: {
-    color: '#FFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
+  subheader: { fontSize: 18, color: '#6B7280', marginBottom: 10, marginHorizontal: 16 },
+  highlight: { fontSize: 16, marginBottom: 20, color: '#1F2937', marginHorizontal: 16 },
+  list: { paddingBottom: 20 },
+  
+  // Estilo do Cartão Atualizado
+  card: { 
+    backgroundColor: '#F3F4F6', 
+    padding: 12, 
+    borderRadius: 10, 
+    marginBottom: 16, 
+    marginHorizontal: 16,
+    // Sombra
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  image: { height: 200, borderRadius: 8, resizeMode: 'contain', marginBottom: 10, backgroundColor: '#fff' },
+  infoContainer: { marginBottom: 10 },
+  title: { fontSize: 20, fontWeight: 'bold', color: '#1F2937' },
+  subtitle: { fontSize: 14, color: '#6B7280', marginVertical: 4 },
+  price: { fontSize: 18, fontWeight: 'bold', color: '#059669', marginTop: 4 },
+  
+  // Estilo do Botão
+  addButton: {
+    backgroundColor: '#4F46E5',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  addButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 
-  error: { color: 'red', fontSize: 16, marginTop: 20, marginHorizontal: 16 },
-  tipsContainer: { marginTop: 30, padding: 16, backgroundColor: '#EEF2FF', borderRadius: 8, marginHorizontal: 16, marginBottom: 40 },
-  tipsTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 8, color: '#4F46E5' },
-  tip: { fontSize: 14, color: '#1F2937', marginBottom: 4 },
+  error: { color: 'red', fontSize: 16, marginTop: 20, marginHorizontal: 16 },
+  tipsContainer: { marginTop: 30, padding: 16, backgroundColor: '#EEF2FF', borderRadius: 8, marginHorizontal: 16, marginBottom: 40 },
+  tipsTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 8, color: '#4F46E5' },
+  tip: { fontSize: 14, color: '#1F2937', marginBottom: 4 },
 });
