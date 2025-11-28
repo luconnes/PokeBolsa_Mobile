@@ -202,8 +202,7 @@ useEffect(() => {
       <FlatList
         data={cartas}
         renderItem={renderItem}
-        keyExtractor={(item: any) => item.id}
-        numColumns={2}
+        keyExtractor={(item: any) => item.id}        
         contentContainerStyle={styles.list}
         ListHeaderComponent={renderHeader}
         ListFooterComponent={!carregando ? renderFooter : null}
@@ -213,7 +212,7 @@ useEffect(() => {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: '#fff', paddingTop: 30 },
   header: { fontSize: 28, fontWeight: 'bold', color: '#4F46E5', marginBottom: 4, marginTop: 16, marginHorizontal: 16 },
   subheader: { fontSize: 18, color: '#6B7280', marginBottom: 10, marginHorizontal: 16 },
   highlight: { fontSize: 16, marginBottom: 20, color: '#1F2937', marginHorizontal: 16 },
